@@ -32,7 +32,7 @@ public partial class App : Application
 
 
                 services.AddLogging(builder => builder.AddDebug());
-                //services.AddHostedService<CrawlingService>();
+
                 services.AddHostedService<CrawlingStorageService>();
 
 

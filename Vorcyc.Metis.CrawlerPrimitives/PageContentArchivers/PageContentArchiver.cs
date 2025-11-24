@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Vorcyc.Metis.Crawler.PageContentArchivers;
+namespace Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
 
 /// <summary>
 /// 页面归档结果。

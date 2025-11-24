@@ -1,4 +1,4 @@
-﻿namespace Vorcyc.Metis.Crawler.PageContentArchivers;
+﻿namespace Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
 
 public sealed class ToutiaoPageContentArchiver : PageContentArchiver
 {

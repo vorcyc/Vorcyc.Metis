@@ -1,7 +1,7 @@
 ﻿using PuppeteerSharp;
 using System.Text.RegularExpressions;
 
-namespace Vorcyc.Metis.Crawler.LinkExtractors;
+namespace Vorcyc.Metis.CrawlerPrimitives.LinkExtractors;
 
 /// <summary>
 /// 使用 PuppeteerSharp 抓取页面中的超链接并提取标题/URL，

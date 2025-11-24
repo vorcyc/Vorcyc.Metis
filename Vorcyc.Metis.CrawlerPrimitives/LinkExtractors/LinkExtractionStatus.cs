@@ -1,4 +1,4 @@
-﻿namespace Vorcyc.Metis.Crawler.LinkExtractors;
+﻿namespace Vorcyc.Metis.CrawlerPrimitives.LinkExtractors;
 
 /// <summary>
 /// 链接提取过程的状态码。

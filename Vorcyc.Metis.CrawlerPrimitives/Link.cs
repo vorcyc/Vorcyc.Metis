@@ -1,4 +1,4 @@
-﻿namespace Vorcyc.Metis.Crawler;
+﻿namespace Vorcyc.Metis.CrawlerPrimitives;
 
 /// <summary>
 /// 表示从页面提取到的锚点对象（Link），包含锚点文本、绝对链接以及可选的内容类别。

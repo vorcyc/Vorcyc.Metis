@@ -1,7 +1,7 @@
 ﻿using PuppeteerSharp;
 using System.Text.RegularExpressions;
 
-namespace Vorcyc.Metis.Crawler.LinkExtractors;
+namespace Vorcyc.Metis.CrawlerPrimitives.LinkExtractors;
 
 /// <summary>
 /// 网易（163.com）首页链接提取器（实例版）。
