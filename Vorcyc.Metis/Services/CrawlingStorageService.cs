@@ -42,9 +42,14 @@ public class CrawlingStorageService : BackgroundService
             await CrawlerManager.Current.RunAllAsync(_db, _logger, stoppingToken);
 
 
-            // Wait for next tick; returns false if cancellation requested
-            if (!await timer.WaitForNextTickAsync(stoppingToken))
-                break;
+            try
+            {
+                // Wait for next tick; returns false if cancellation requested
+                if (!await timer.WaitForNextTickAsync(stoppingToken))
+                    break;
+            }
+            finally { }
+           
         }
     }
 

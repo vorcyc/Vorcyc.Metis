@@ -192,6 +192,58 @@ public static class PageCategoryBuilder
     }
 
 
+    // 将枚举（支持组合）转换为友好的中文字符串
+    public static string ToFriendlyChinese(PageContentCategory category)
+    {
+        if (category == PageContentCategory.None)
+        {
+            return "未分类";
+        }
 
+        if (category == PageContentCategory.All)
+        {
+            return "全部";
+        }
+
+        // 按固定映射和顺序输出，避免 Enum.GetValues 的不确定顺序
+        var parts = new List<string>();
+
+        void AddIf(PageContentCategory flag, string name)
+        {
+            if ((category & flag) == flag)
+            {
+                parts.Add(name);
+            }
+        }
+
+        AddIf(PageContentCategory.Edu, "教育");
+        AddIf(PageContentCategory.Entertainment, "娱乐");
+        AddIf(PageContentCategory.House, "房产");
+        AddIf(PageContentCategory.Tech, "科技");
+        AddIf(PageContentCategory.Sports, "体育");
+        AddIf(PageContentCategory.Car, "汽车");
+        AddIf(PageContentCategory.Culture, "文化");
+        AddIf(PageContentCategory.Game, "游戏");
+        AddIf(PageContentCategory.Travel, "旅游");
+        AddIf(PageContentCategory.Military, "军事");
+        AddIf(PageContentCategory.World, "国际");
+        AddIf(PageContentCategory.Finance, "财经");
+        AddIf(PageContentCategory.Agriculture, "农业");
+        AddIf(PageContentCategory.Story, "故事");
+        AddIf(PageContentCategory.Stock, "股票");
+        AddIf(PageContentCategory.DomesticPolitics, "国内政治");
+        AddIf(PageContentCategory.Politics, "政治");
+        AddIf(PageContentCategory.Sport, "体育"); // BBC 的 sport 也统一为“体育”
+        AddIf(PageContentCategory.Business, "商业");
+
+        if (parts.Count == 0)
+        {
+            // 存在未知/未映射的位时的兜底
+            return "未分类";
+        }
+
+        // 使用顿号连接更符合中文阅读习惯
+        return string.Join('、', parts);
+    }
 
 }

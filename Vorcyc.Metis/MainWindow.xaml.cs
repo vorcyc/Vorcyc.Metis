@@ -1,4 +1,6 @@
 ﻿using System.Runtime.InteropServices;
+using System.Speech.Synthesis;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,6 +27,7 @@ public partial class MainWindow : Window
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+
         Dwm.ExtendGlassFrame(this, new Thickness(-1));
 
         _dragMoveExtender = new(this.LayoutRoot)
@@ -54,7 +57,8 @@ public partial class MainWindow : Window
 
     private void Image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        Application.Current.Shutdown();
+        //Application.Current.Shutdown();
+        this.Close();
     }
 
     private void Image_MouseLeave(object sender, MouseEventArgs e)
@@ -63,6 +67,19 @@ public partial class MainWindow : Window
         img.Source = new BitmapImage(new Uri("pack://application:,,,/Images/exit.png", UriKind.Absolute));
 
     }
+
+
+    private void btnPrevious_Click(object sender, RoutedEventArgs e)
+    {
+        NewsReader.Prevoius();
+    }
+
+    private void btnNext_Click(object sender, RoutedEventArgs e)
+    {
+        NewsReader.Next();
+    }
+
+
 }
 
 
