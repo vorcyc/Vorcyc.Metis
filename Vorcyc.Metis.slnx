@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/docs/" />
+  <Folder Name="/TESTS/" />
+  <Project Path="Vorcyc.Metis.Classifiers/Vorcyc.Metis.Classifiers.csproj" />
+  <Project Path="Vorcyc.Metis.CrawlerPrimitives/Vorcyc.Metis.CrawlerPrimitives.csproj" />
+  <Project Path="Vorcyc.Metis.Storage/Vorcyc.Metis.Storage.csproj" />
+  <Project Path="Vorcyc.Metis/Vorcyc.Metis.csproj" />
+</Solution>
