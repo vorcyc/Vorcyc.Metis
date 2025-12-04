@@ -34,6 +34,7 @@ internal static class NewsReader
                                  // Optionally select a specific voice if available:
             _synth.SelectVoice("Microsoft Huihui Desktop"); // Example for zh-CN
 
+           
 
             _history = new();
 

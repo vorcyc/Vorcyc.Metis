@@ -41,7 +41,7 @@ public partial class App : Application
             })
             .Build();
 
-        _host.StartAsync();
+        await _host.StartAsync();
 
         base.OnStartup(e);
     }
@@ -50,7 +50,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        _host.StopAsync();
+        _host?.StopAsync();
 
         base.OnExit(e);
     }

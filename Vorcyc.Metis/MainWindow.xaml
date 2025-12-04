@@ -8,7 +8,7 @@
         Title="Vorcyc Metis" SizeToContent="WidthAndHeight" ShowInTaskbar="True"
         WindowStartupLocation="CenterScreen" Background="Transparent"
         WindowState="Normal"  ResizeMode="CanMinimize"  
-        WindowStyle="None" AllowsTransparency="True">
+        WindowStyle="None" AllowsTransparency="True" Opacity="0.9">
 
     <Window.Resources>
         <!-- Shared brushes to match window chrome -->
@@ -123,11 +123,11 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border"
                                 Background="Transparent"
-                                BorderBrush="#252525"
+                                BorderBrush="Transparent"
                                 Padding="5"
-                                Margin="0 0 0 2"
+                                Margin="0"
                                 BorderThickness="1"
-                                CornerRadius="2">
+                                CornerRadius="4">
                             <!-- ContentPresenter passes Foreground down; Path must bind to it -->
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center"/>
@@ -216,6 +216,7 @@
                     </Grid.RowDefinitions>
 
                     <Button Style="{StaticResource SunkenToggleButton}" Grid.Column="0" Grid.Row="0" Margin="1"
+                            VerticalAlignment="Bottom" VerticalContentAlignment="Bottom"
                             x:Name="btnPrevious" Click="btnPrevious_Click">
                         <Path HorizontalAlignment="Center"
                           VerticalAlignment="Center"
