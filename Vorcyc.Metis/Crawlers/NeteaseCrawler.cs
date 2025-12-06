@@ -76,6 +76,7 @@ internal class NeteaseCrawler : ICrawler
             if (existingUrls.Contains(result.Url)) continue;
             if (result.TextLength == 0) continue;
 
+            var cateEnum = Vorcyc.Metis.Classifiers.Text.PageCategoryBuilder.Build(result.Title);
             dbContext.Archives.Add(new Vorcyc.Metis.Storage.SQLiteStorage.ArchiveEntity
             {
                 Title = result.Title ?? string.Empty,
@@ -85,7 +86,8 @@ internal class NeteaseCrawler : ICrawler
                 Publisher = result.Publisher,
                 PublishTime = result.PublishTime,
                 Content = result.Content ?? string.Empty,
-                Category = Vorcyc.Metis.Classifiers.Text.PageCategoryBuilder.Build(result.Title)
+                CategoryValue = cateEnum,
+                Category = Vorcyc.Metis.Classifiers.Text.PageCategoryBuilder.ToFriendlyChinese(cateEnum)
             });
 
             existingUrls.Add(result.Url);

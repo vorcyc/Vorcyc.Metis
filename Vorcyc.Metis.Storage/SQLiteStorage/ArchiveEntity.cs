@@ -34,6 +34,11 @@ public class ArchiveEntity
     public string Content { get; set; } = string.Empty;
 
 
-    public PageContentCategory Category { get; set; }
+    public string Category { get; set; } = string.Empty;
+
+
+    //SQLITE 数据库中是 int 类型
+    public PageContentCategory CategoryValue { get; set; }
+
 
 }

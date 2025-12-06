@@ -155,7 +155,7 @@
 
     </Window.Resources>
 
-    <Grid x:Name="LayoutRoot" MouseLeftButtonDown="LayoutRoot_MouseLeftButtonDown">
+    <Grid x:Name="LayoutRoot">
         <!--淡化边-->
         <Rectangle StrokeThickness="5" RadiusX="5" RadiusY="5" Margin="5">
             <!--<Rectangle.Effect>
@@ -239,11 +239,58 @@
                     </Button>
 
                     <Border Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="2" 
-                            Height="50" Width="400" 
+                            Height="54" Width="400" 
                             BorderBrush="#252525" BorderThickness="2" CornerRadius="3">
+                        <Grid Margin="8" DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
+                            <!-- 第一行：左侧标题，右侧 meta（发布者 | 时间 | 类别） -->
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- 标题靠左 -->
+                                <TextBlock Grid.Column="0"
+                                      Foreground="#FFECEBE6"
+                                      FontSize="11"
+                                      TextTrimming="CharacterEllipsis"
+                                      Text="{Binding CurrentArchive.Title}"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Top"
+                                      TextWrapping="NoWrap"/>
+
+                                <!-- Meta 靠右 -->
+                                <TextBlock Grid.Column="1"
+                                      Foreground="#FFBFBEB9"
+                                      FontSize="10"
+                                      TextTrimming="CharacterEllipsis"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Top"
+                                      TextAlignment="Right"
+                                      Text="{Binding ArchiveMetaLine}">
+                                </TextBlock>
+                            </Grid>
+
+                            <!-- 第二行：内容自动滚动显示 -->
+                            <ScrollViewer x:Name="ContentScrollViewer"
+                                  Grid.Row="1" Margin="0,6,0,0"
+                                  VerticalScrollBarVisibility="Hidden"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  MouseEnter="ContentScrollViewer_MouseEnter"
+                                  MouseLeave="ContentScrollViewer_MouseLeave">
+                                <TextBlock x:Name="ContentTextBlock"
+                                   Text="{Binding CurrentArchive.Content}"
+                                   Foreground="#FFECEBE6"
+                                   TextWrapping="Wrap"
+                                   FontSize="12"/>
+                            </ScrollViewer>
+                        </Grid>
                     </Border>
-
 
                 
                 </Grid>

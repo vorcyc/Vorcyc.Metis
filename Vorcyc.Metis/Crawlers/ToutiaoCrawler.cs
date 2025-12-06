@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Vorcyc.Metis.Classifiers.Text;
 using Vorcyc.Metis.CrawlerPrimitives.LinkExtractors;
 using Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
 using Vorcyc.Metis.Services;
@@ -87,6 +88,7 @@ internal class ToutiaoCrawler : ICrawler
             if (existingUrls.Contains(result.Url)) continue;
             if (result.TextLength == 0) continue;
 
+            var cateEnum = Vorcyc.Metis.Classifiers.Text.PageCategoryBuilder.Build(result.Title);
             var entity = new Vorcyc.Metis.Storage.SQLiteStorage.ArchiveEntity
             {
                 Title = result.Title ?? string.Empty,
@@ -96,7 +98,8 @@ internal class ToutiaoCrawler : ICrawler
                 Publisher = result.Publisher,
                 PublishTime = result.PublishTime,
                 Content = result.Content ?? string.Empty,
-                Category = Vorcyc.Metis.Classifiers.Text.PageCategoryBuilder.Build(result.Title)
+                CategoryValue = cateEnum,
+                Category = PageCategoryBuilder.ToFriendlyChinese(cateEnum),
             };
 
             dbContext.Archives.Add(entity);

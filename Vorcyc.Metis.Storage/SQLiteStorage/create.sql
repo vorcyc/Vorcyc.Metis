@@ -7,5 +7,6 @@
   PublishTime TEXT NULL,
   Publisher TEXT NULL,
   Content TEXT NOT NULL,
-  Category TEXT NOT NULL
+  Category TEXT NOT NULL,
+  CategoryValue INTEGER NOT NULL
 );

@@ -13,8 +13,27 @@ public class SQLiteDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        if (!optionsBuilder.IsConfigured)
-            optionsBuilder.UseSqlite("Data Source=..\\..\\..\\metis.sqlite3;Cache=Shared;");
+        if (optionsBuilder.IsConfigured)
+        {
+            return;
+        }
+
+        // Default: use DB in program's current directory
+        var baseDir = AppContext.BaseDirectory;
+        var localDbPath = Path.Combine(baseDir, "metis.sqlite3");
+        string connectionString;
+
+        if (File.Exists(localDbPath))
+        {
+            connectionString = $"Data Source={localDbPath};Cache=Shared;";
+        }
+        else
+        {
+            // Roll back to previous relative path
+            connectionString = "Data Source=..\\..\\..\\metis.sqlite3;Cache=Shared;";
+        }
+
+        optionsBuilder.UseSqlite(connectionString);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -78,19 +97,16 @@ public class SQLiteDbContext : DbContext
                   .HasColumnType("TEXT")
                   .IsRequired();
 
-
-
-
-
-
-            // Store enum as TEXT (e.g., "Tech, Sports") matching your schema
+            // Category: TEXT NOT NULL (string)
             entity.Property(e => e.Category)
                   .HasColumnName("Category")
                   .HasColumnType("TEXT")
-                  .HasConversion(
-                      toProvider => toProvider.ToString(),
-                      fromProvider => StringToEnum<PageContentCategory>(fromProvider, PageContentCategory.None)
-                  )
+                  .IsRequired();
+
+            // CategoryValue: INTEGER NOT NULL (enum stored as int)
+            entity.Property(e => e.CategoryValue)
+                  .HasColumnName("CategoryValue")
+                  .HasColumnType("INTEGER")
                   .IsRequired();
 
 
