@@ -1,99 +1,107 @@
 ﻿using Microsoft.WindowsAPICodePack.Taskbar;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Speech.Synthesis;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Vorcyc.Metis.Classifiers.Text;
 using Vorcyc.Metis.Storage.SQLiteStorage;
+// WinForms NotifyIcon for system tray
+using System.Drawing;
+using System.Windows.Forms;
+using Image = System.Windows.Controls.Image;
 
 namespace Vorcyc.Metis;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
+    #region Fields
 
     private DispatcherTimer? _autoScrollTimer;
     private bool _pauseScroll;
 
-    Vorcyc.PowerLibrary.Windows.Wpf.DragMoveExtender _dragMoveExtender;
+    private Vorcyc.PowerLibrary.Windows.Wpf.DragMoveExtender _dragMoveExtender = null!;
+    private WindowInteropHelper _windowInterop = null!;
+    private readonly List<ThumbnailToolBarButton> _thumbnailButtons = new();
 
+    private NotifyIcon? _tray;
+    private ToolStripMenuItem? _autoPlayItem;
+    private ToolStripMenuItem? _interestMenu;
+    private readonly Dictionary<PageContentCategory, ToolStripMenuItem> _interestItems = new();
+    private PageContentCategory _selectedInterests = PageContentCategory.None;
 
-    private WindowInteropHelper _windowInterop;
-    private List<ThumbnailToolBarButton> thumbnailToolBarButtons = new List<ThumbnailToolBarButton>();
+    private ArchiveEntity? _currentArchive;
 
+    #endregion
+
+    #region Constructor & Lifecycle
 
     public MainWindow()
     {
         InitializeComponent();
+
         _windowInterop = new WindowInteropHelper(this);
-        this.Loaded += MainWindow_Loaded;
-        this.Unloaded += MainWindow_Unloaded;
+        Loaded += MainWindow_Loaded;
+        Unloaded += MainWindow_Unloaded;
     }
 
-    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    private void MainWindow_Loaded(object? sender, RoutedEventArgs e)
     {
-        _autoScrollTimer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromMilliseconds(50) // scroll cadence
-        };
-        _autoScrollTimer.Tick += AutoScrollTimer_Tick;
-        _autoScrollTimer.Start();
+        SetupAutoScroll();
+        SetupDragMove();
+        SetupTaskbarThumbnailButtons();
+        SetupSystemTray();
 
-
-        _dragMoveExtender = new(this.LayoutRoot)
-        {
-            MouseDownCursor = Cursors.Hand,
-            Affinity = 10
-        };
-
-
-        #region 添加系统任务栏按钮支持
-
-        if (TaskbarManager.IsPlatformSupported)
-        {
-            thumbnailToolBarButtons.Add(new ThumbnailToolBarButton(Properties.Resources.play, "Play"));
-            thumbnailToolBarButtons.Add(new ThumbnailToolBarButton(Properties.Resources.pause, "Pause") { Enabled = false });
-            thumbnailToolBarButtons.Add(new ThumbnailToolBarButton(Properties.Resources.stop, "Stop"));
-
-            foreach (var ttbb in thumbnailToolBarButtons)
-                ttbb.Click += new EventHandler<ThumbnailButtonClickedEventArgs>(ttbb_Click);
-
-            TaskbarManager.Instance.ThumbnailToolBars.AddButtons(_windowInterop.Handle,
-                                                                    thumbnailToolBarButtons.ToArray());
-        }
-        #endregion
+        // Reuse tray menu on window right-click
+        MouseRightButtonUp += MainWindow_MouseRightButtonUp;
 
         NewsReader.Instance.ArticleChanged += NewsReader_ArticleChanged;
     }
 
-    void ttbb_Click(object sender, ThumbnailButtonClickedEventArgs e)
+    private void MainWindow_Unloaded(object? sender, RoutedEventArgs e)
     {
-        switch (e.ThumbnailButton.Tooltip)
+        TeardownAutoScroll();
+        TeardownTaskbarThumbnailButtons();
+        TeardownSystemTray();
+
+        // Unwire right-click handler
+        MouseRightButtonUp -= MainWindow_MouseRightButtonUp;
+
+        NewsReader.Instance.ArticleChanged -= NewsReader_ArticleChanged;
+    }
+
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+        if (WindowState == WindowState.Minimized)
         {
-            case "Play":
-                break;
-            case "Pause":
-                break;
-            case "Stop":
-             
-                break;
-            default:
-                break;
+            Hide(); // minimize to tray
         }
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        TeardownSystemTray();
+        base.OnClosed(e);
+    }
 
-    private void MainWindow_Unloaded(object? sender, RoutedEventArgs e)
+    #endregion
+
+    #region Setup/Teardown helpers
+
+    private void SetupAutoScroll()
+    {
+        _autoScrollTimer = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(50)
+        };
+        _autoScrollTimer.Tick += AutoScrollTimer_Tick;
+        _autoScrollTimer.Start();
+    }
+
+    private void TeardownAutoScroll()
     {
         if (_autoScrollTimer is not null)
         {
@@ -101,11 +109,248 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _autoScrollTimer.Tick -= AutoScrollTimer_Tick;
             _autoScrollTimer = null;
         }
-
-        NewsReader.Instance.ArticleChanged -= NewsReader_ArticleChanged;
     }
 
-    // Timer tick: auto scroll down; when reaching bottom, wait briefly then reset to top
+    private void SetupDragMove()
+    {
+        _dragMoveExtender = new(this.LayoutRoot)
+        {
+            MouseDownCursor = System.Windows.Input.Cursors.Hand,
+            Affinity = 10
+        };
+    }
+
+    private void SetupTaskbarThumbnailButtons()
+    {
+        if (!TaskbarManager.IsPlatformSupported)
+        {
+            return;
+        }
+
+        _thumbnailButtons.Add(new ThumbnailToolBarButton(Properties.Resources.play, "Play"));
+        _thumbnailButtons.Add(new ThumbnailToolBarButton(Properties.Resources.pause, "Pause") { Enabled = false });
+        _thumbnailButtons.Add(new ThumbnailToolBarButton(Properties.Resources.stop, "Stop"));
+
+        foreach (var btn in _thumbnailButtons)
+        {
+            btn.Click += ttbb_Click;
+        }
+
+        TaskbarManager.Instance.ThumbnailToolBars.AddButtons(_windowInterop.Handle, _thumbnailButtons.ToArray());
+    }
+
+    private void TeardownTaskbarThumbnailButtons()
+    {
+        foreach (var btn in _thumbnailButtons)
+        {
+            btn.Click -= ttbb_Click;
+        }
+        _thumbnailButtons.Clear();
+    }
+
+    private void SetupSystemTray()
+    {
+        if (_tray is not null) return;
+
+        _tray = new NotifyIcon
+        {
+            Text = "Vorcyc Metis",
+            Icon = new Icon(SystemIcons.Application, 40, 40),
+            Visible = true,
+            ContextMenuStrip = new ContextMenuStrip()
+        };
+
+        // Show
+        _tray.ContextMenuStrip.Items.Add("显示主窗口", null, (_, __) =>
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+        });
+
+        // Separator
+        _tray.ContextMenuStrip.Items.Add(new ToolStripSeparator());
+
+        // 自动连播（可勾选），位于“兴趣”之前
+        _autoPlayItem = new ToolStripMenuItem("自动连播")
+        {
+            CheckOnClick = true,
+            Checked = NewsReader.Instance.AutoPlay
+        };
+        _autoPlayItem.CheckedChanged += AutoPlayItem_CheckedChanged;
+        _tray.ContextMenuStrip.Items.Add(_autoPlayItem);
+
+
+        // 兴趣（复选子菜单）
+        _interestMenu = new ToolStripMenuItem("兴趣");
+        BuildInterestMenu(_interestMenu);
+        _tray.ContextMenuStrip.Items.Add(_interestMenu);
+
+        // Separator + Exit
+        _tray.ContextMenuStrip.Items.Add(new ToolStripSeparator());
+        _tray.ContextMenuStrip.Items.Add("退出", null, (_, __) => App.Current.Shutdown());
+
+        _tray.DoubleClick += (_, __) =>
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+        };
+    }
+
+    private void TeardownSystemTray()
+    {
+        if (_tray is not null)
+        {
+            _tray.Visible = false;
+            _tray.Dispose();
+            _tray = null;
+        }
+        _interestItems.Clear();
+        _interestMenu = null;
+        _autoPlayItem = null;
+    }
+
+    #endregion
+
+    #region Context menu reuse
+
+    // Show the tray context menu at the mouse location when right-clicking the window
+    private void MainWindow_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_tray?.ContextMenuStrip is null) return;
+
+        var pt = e.GetPosition(this);
+        var screen = PointToScreen(pt);
+        var winFormsPoint = new System.Drawing.Point((int)screen.X, (int)screen.Y);
+        _tray.ContextMenuStrip.Show(winFormsPoint);
+    }
+
+    #endregion
+
+    #region AutoPlay toggle
+
+    private void AutoPlayItem_CheckedChanged(object? sender, EventArgs e)
+    {
+        if (_autoPlayItem is null) return;
+
+        NewsReader.Instance.AutoPlay = _autoPlayItem.Checked;
+
+        // 如果“自动连播”关联到你的自动滚动或自动切换文章逻辑，可在此处触发
+        // 例如：开启时继续计时器，关闭时暂停等（示例保持当前行为不变）
+        // _autoScrollTimer?.(Start/Stop) 根据你的设计
+    }
+
+    #endregion
+
+    #region Interest submenu
+
+    private void BuildInterestMenu(ToolStripMenuItem root)
+    {
+        root.DropDownItems.Clear();
+        _interestItems.Clear();
+
+        void AddFlag(PageContentCategory flag, string text)
+        {
+            var item = new ToolStripMenuItem(text)
+            {
+                CheckOnClick = true,
+                Checked = (_selectedInterests & flag) == flag,
+                Tag = flag
+            };
+            item.CheckedChanged += InterestItem_CheckedChanged;
+            root.DropDownItems.Add(item);
+            _interestItems[flag] = item;
+        }
+
+        AddFlag(PageContentCategory.Edu, "教育");
+        AddFlag(PageContentCategory.Entertainment, "娱乐");
+        AddFlag(PageContentCategory.House, "房产");
+        AddFlag(PageContentCategory.Tech, "科技");
+        AddFlag(PageContentCategory.Sports, "体育");
+        AddFlag(PageContentCategory.Car, "汽车");
+        AddFlag(PageContentCategory.Culture, "文化");
+        AddFlag(PageContentCategory.Game, "游戏");
+        AddFlag(PageContentCategory.Travel, "旅游");
+        AddFlag(PageContentCategory.Military, "军事");
+        AddFlag(PageContentCategory.World, "国际");
+        AddFlag(PageContentCategory.Finance, "财经");
+        AddFlag(PageContentCategory.Agriculture, "农业");
+        AddFlag(PageContentCategory.Story, "故事");
+        AddFlag(PageContentCategory.Stock, "股票");
+        AddFlag(PageContentCategory.DomesticPolitics, "国内政治");
+
+        root.DropDownItems.Add(new ToolStripSeparator());
+
+        AddFlag(PageContentCategory.Politics, "政治");
+        AddFlag(PageContentCategory.Sport, "体育");
+        AddFlag(PageContentCategory.Business, "商业");
+
+        root.DropDownItems.Add(new ToolStripSeparator());
+
+        var selectAll = new ToolStripMenuItem("全选");
+        selectAll.Click += (_, __) => SetAllInterests(true);
+        root.DropDownItems.Add(selectAll);
+
+        var clearAll = new ToolStripMenuItem("清空");
+        clearAll.Click += (_, __) => SetAllInterests(false);
+        root.DropDownItems.Add(clearAll);
+    }
+
+    private void InterestItem_CheckedChanged(object? sender, EventArgs e)
+    {
+        if (sender is not ToolStripMenuItem item || item.Tag is not PageContentCategory flag)
+            return;
+
+        if (item.Checked)
+        {
+            _selectedInterests |= flag;
+        }
+        else
+        {
+            _selectedInterests &= ~flag;
+        }
+
+        OnPropertyChanged(nameof(ArchiveMetaLine));
+    }
+
+    private void SetAllInterests(bool check)
+    {
+        foreach (var kvp in _interestItems)
+        {
+            kvp.Value.Checked = check;
+        }
+
+        _selectedInterests = check ? PageContentCategory.All : PageContentCategory.None;
+        OnPropertyChanged(nameof(ArchiveMetaLine));
+    }
+
+    #endregion
+
+    #region Taskbar Thumbnail Buttons
+
+    private void ttbb_Click(object? sender, ThumbnailButtonClickedEventArgs e)
+    {
+        switch (e.ThumbnailButton.Tooltip)
+        {
+            case "Play":
+                break;
+
+            case "Pause":
+                break;
+
+            case "Stop":
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    #endregion
+
+    #region Auto-scroll
+
     private void AutoScrollTimer_Tick(object? sender, EventArgs e)
     {
         if (_pauseScroll || ContentScrollViewer is null)
@@ -113,10 +358,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        const double step = 0.8; // pixels per tick; tune as needed
+        const double step = 0.8; // pixels per tick
         var sv = ContentScrollViewer;
 
-        // If content not exceeding viewport, skip scrolling
         if (sv.ScrollableHeight <= 0)
         {
             return;
@@ -126,9 +370,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (next >= sv.ScrollableHeight)
         {
-            // small idle at bottom, then reset
             sv.ScrollToVerticalOffset(sv.ScrollableHeight);
-            // optional: delay reset by a second
+
             _autoScrollTimer!.Stop();
             Dispatcher.InvokeAsync(async () =>
             {
@@ -143,8 +386,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    private void ContentScrollViewer_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        _pauseScroll = true;
+    }
 
-    private void Image_MouseEnter(object sender, MouseEventArgs e)
+    private void ContentScrollViewer_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        _pauseScroll = false;
+    }
+
+    #endregion
+
+    #region UI events
+
+    private void Image_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
     {
         var img = (Image)sender;
         img.Source = new BitmapImage(new Uri("pack://application:,,,/Images/exit_hover.png", UriKind.Absolute));
@@ -152,17 +408,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        //Application.Current.Shutdown();
-        this.Close();
+        Close();
     }
 
-    private void Image_MouseLeave(object sender, MouseEventArgs e)
+    private void Image_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
     {
         var img = (Image)sender;
         img.Source = new BitmapImage(new Uri("pack://application:,,,/Images/exit.png", UriKind.Absolute));
-
     }
-
 
     private void btnPrevious_Click(object sender, RoutedEventArgs e)
     {
@@ -174,40 +427,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         NewsReader.Instance.Next();
     }
 
-    // Pause on hover (optional)
-    private void ContentScrollViewer_MouseEnter(object sender, MouseEventArgs e)
-    {
-        _pauseScroll = true;
-    }
+    #endregion
 
-    private void ContentScrollViewer_MouseLeave(object sender, MouseEventArgs e)
-    {
-        _pauseScroll = false;
-    }
+    #region NewsReader bindings
 
-    // When article changes, update UI and reset scroll to top
     private void NewsReader_ArticleChanged(ArchiveEntity obj)
     {
         CurrentArchive = obj;
         ContentScrollViewer?.ScrollToTop();
     }
-
-
-
-
-
-
-
-    // INotifyPropertyChanged
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    private void OnPropertyChanged([CallerMemberName] string? name = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-
-    private ArchiveEntity? _currentArchive;
-
 
     public ArchiveEntity? CurrentArchive
     {
@@ -217,13 +445,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (!Equals(_currentArchive, value))
             {
                 _currentArchive = value;
-                OnPropertyChanged(nameof(CurrentArchive));     // notify bindings to CurrentArchive and its nested paths
-                OnPropertyChanged(nameof(ArchiveMetaLine));    // notify derived meta line
+                OnPropertyChanged(nameof(CurrentArchive));
+                OnPropertyChanged(nameof(ArchiveMetaLine));
             }
         }
     }
 
-    // 组合 发布者 | 类别(友好中文) | 时间(友好本地)
     public string ArchiveMetaLine
     {
         get
@@ -243,5 +470,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    #endregion
 
+    #region INotifyPropertyChanged
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    #endregion
 }
