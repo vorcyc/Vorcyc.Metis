@@ -370,7 +370,7 @@
                         <ToggleButton x:Name="btnPlayStop"
                           Style="{StaticResource PlayStopToggleButton}"
                           ToolTip="播放/停止"
-                          Width="34"
+                          Width="36"
                           Margin="0 8 0 5"
                           Checked="btnPlayStop_Checked"
                           Unchecked="btnPlayStop_Unchecked"/>

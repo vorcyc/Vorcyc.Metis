@@ -14,6 +14,8 @@
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<Description>Vorcyc Metis is a powerful web crawling and data extraction framework designed for efficiency and scalability.</Description>
 		<AssemblyName>Vorcyc Metis</AssemblyName>
+		<PackageIcon>metis_logo.png</PackageIcon>
+		<ApplicationIcon>Resources\metis_icon.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -54,6 +56,10 @@
 	<ItemGroup>
 	  <None Update="chrome_archives.zip">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Images\metis_logo.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
 	  </None>
 	</ItemGroup>
 	

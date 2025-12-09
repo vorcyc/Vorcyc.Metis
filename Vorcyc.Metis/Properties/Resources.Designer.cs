@@ -73,6 +73,16 @@ namespace Vorcyc.Metis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
+        internal static System.Drawing.Icon metis_icon {
+            get {
+                object obj = ResourceManager.GetObject("metis_icon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
         internal static System.Drawing.Icon pause {
             get {
                 object obj = ResourceManager.GetObject("pause", resourceCulture);
