@@ -49,6 +49,9 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+
+        NewsReader.Instance.SaveConfigSafe();
+
         _host?.StopAsync();
 
         KillChromeProcesses();

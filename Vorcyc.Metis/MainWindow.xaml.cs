@@ -12,6 +12,7 @@ using Vorcyc.Metis.Storage.SQLiteStorage;
 using System.Drawing;
 using System.Windows.Forms;
 using Image = System.Windows.Controls.Image;
+using MessageBox = System.Windows.MessageBox;
 
 namespace Vorcyc.Metis;
 
@@ -36,6 +37,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     #endregion
 
+
+
+
     #region Constructor & Lifecycle
 
     public MainWindow()
@@ -52,6 +56,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         SetupAutoScroll();
         SetupDragMove();
         SetupTaskbarThumbnailButtons();
+
+        // 初始化兴趣选中状态与自动连播状态自 NewsReader
+        _selectedInterests = NewsReader.Instance.SelectedCategory;
+
         SetupSystemTray();
 
         // Reuse tray menu on window right-click
@@ -180,11 +188,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _autoPlayItem.CheckedChanged += AutoPlayItem_CheckedChanged;
         _tray.ContextMenuStrip.Items.Add(_autoPlayItem);
 
-
         // 兴趣（复选子菜单）
         _interestMenu = new ToolStripMenuItem("兴趣");
         BuildInterestMenu(_interestMenu);
         _tray.ContextMenuStrip.Items.Add(_interestMenu);
+
+
+        // Separator + About + Exit
+        _tray.ContextMenuStrip.Items.Add(new ToolStripSeparator());
+
+        var aboutItem = new ToolStripMenuItem("关于");
+        aboutItem.Click += ShowAboutMenu_Click;
+        _tray.ContextMenuStrip.Items.Add(aboutItem);
+
 
         // Separator + Exit
         _tray.ContextMenuStrip.Items.Add(new ToolStripSeparator());
@@ -197,6 +213,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Activate();
         };
     }
+
+
+    private void ShowAboutMenu_Click(object? sender, EventArgs e)
+    {
+        var text =
+            "产品名: Vorcyc Metis 1.0\n" +
+            "功能: 从几个网站抓取数据，进行分类并朗读给用户听。\n" +
+            "所属单位: 昆明涡旋科技有限公司\n" +
+            "作者: cyclone_dll  <cyclone_dll@hotmail.com>\n" +
+            "作者: YuanZun Zhang <123@qq.coim>\n"+
+            "github: https://github.com/vorcyc/Vorcyc.Metis";
+        MessageBox.Show(this, text, "关于", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
 
     private void TeardownSystemTray()
     {
@@ -235,10 +265,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (_autoPlayItem is null) return;
 
         NewsReader.Instance.AutoPlay = _autoPlayItem.Checked;
+    }
 
-        // 如果“自动连播”关联到你的自动滚动或自动切换文章逻辑，可在此处触发
-        // 例如：开启时继续计时器，关闭时暂停等（示例保持当前行为不变）
-        // _autoScrollTimer?.(Start/Stop) 根据你的设计
+
+    private void btnPlayStop_Checked(object sender, RoutedEventArgs e)
+    {
+        NewsReader.Instance.IsPlaying = true;
+    }
+
+    private void btnPlayStop_Unchecked(object sender, RoutedEventArgs e)
+    {
+        NewsReader.Instance.IsPlaying = false;
     }
 
     #endregion
@@ -282,9 +319,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         root.DropDownItems.Add(new ToolStripSeparator());
 
-        AddFlag(PageContentCategory.Politics, "政治");
-        AddFlag(PageContentCategory.Sport, "体育");
-        AddFlag(PageContentCategory.Business, "商业");
+        AddFlag(PageContentCategory.Politics, "国际政治（英文）");
+        AddFlag(PageContentCategory.Sport, "体育（英文）");
+        AddFlag(PageContentCategory.Business, "商业（英文）");
 
         root.DropDownItems.Add(new ToolStripSeparator());
 
@@ -311,6 +348,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _selectedInterests &= ~flag;
         }
 
+        // 同步到 NewsReader.Instance.SelectedCategory
+        NewsReader.Instance.SelectedCategory = _selectedInterests;
+
         OnPropertyChanged(nameof(ArchiveMetaLine));
     }
 
@@ -322,6 +362,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         _selectedInterests = check ? PageContentCategory.All : PageContentCategory.None;
+
+        // 同步到 NewsReader.Instance.SelectedCategory
+        NewsReader.Instance.SelectedCategory = _selectedInterests;
+
         OnPropertyChanged(nameof(ArchiveMetaLine));
     }
 

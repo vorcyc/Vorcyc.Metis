@@ -152,6 +152,63 @@
         </Style>
 
 
+        <!-- 播放/停止切换的 ToggleButton 样式 -->
+        <Style x:Key="PlayStopToggleButton" TargetType="ToggleButton">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Foreground" Value="WhiteSmoke"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="border"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                Padding="5"
+                                Margin="0"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <Path x:Name="IconPath"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Stretch="Fill"
+                                  Width="8"
+                                  Height="12"
+                                  Fill="{TemplateBinding Foreground}"
+                                  Data="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover/Pressed/Disabled 配色 -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FF3D3D3D"/>
+                                <Setter Property="Foreground" Value="#FFFFD65C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Foreground" Value="#FFFFA000"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#FF7A7A7A"/>
+                                <Setter TargetName="border" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+
+                            <!-- 勾选=停止图标 -->
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="IconPath" Property="Data"
+                                Value="M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/>
+                                <Setter TargetName="IconPath" Property="Width" Value="12"/> 
+                                <Setter Property="Foreground" Value="OrangeRed"/>
+                            </Trigger>
+
+                            <!-- 未勾选=播放图标 -->
+                            <Trigger Property="IsChecked" Value="False">
+                                <Setter TargetName="IconPath" Property="Data"
+                                Value="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
+                                <Setter Property="Foreground" Value="GreenYellow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
     </Window.Resources>
 
@@ -292,17 +349,37 @@
                         </Grid>
                     </Border>
 
-                
+
                 </Grid>
 
 
-                <StackPanel Orientation="Horizontal" Grid.Column="1" Grid.Row="0">
-                    <Image Source="/Images/min.png" Stretch="None" Margin="2,0,2,0" />
-                    <Image Source="/Images/exit.png" Stretch="None" Margin="2,0,5,0" 
+                <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="0">
+                        <Image Source="/Images/min.png" Stretch="None" Margin="2,0,2,0" />
+                        <Image Source="/Images/exit.png" Stretch="None" Margin="2,0,5,0" 
                            MouseEnter="Image_MouseEnter"
                            MouseLeave="Image_MouseLeave"
                            MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
-                </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.RowSpan="2">
+                        <ToggleButton x:Name="btnPlayStop"
+                          Style="{StaticResource PlayStopToggleButton}"
+                          ToolTip="播放/停止"
+                          Width="34"
+                          Margin="0 8 0 5"
+                          Checked="btnPlayStop_Checked"
+                          Unchecked="btnPlayStop_Unchecked"/>
+                    </StackPanel>
+
+                </Grid>
+
             </Grid>
 
         </Border>
