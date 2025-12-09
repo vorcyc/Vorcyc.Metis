@@ -271,11 +271,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void btnPlayStop_Checked(object sender, RoutedEventArgs e)
     {
         NewsReader.Instance.IsPlaying = true;
+        btnPrevious.IsEnabled = btnNext.IsEnabled = true;
     }
 
     private void btnPlayStop_Unchecked(object sender, RoutedEventArgs e)
     {
         NewsReader.Instance.IsPlaying = false;
+        btnPrevious.IsEnabled = btnNext.IsEnabled = false;
     }
 
     #endregion

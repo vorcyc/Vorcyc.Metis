@@ -252,12 +252,6 @@
                     <RowDefinition Height="0.5*"/>
                 </Grid.RowDefinitions>
 
-                <!--<StackPanel Orientation="Horizontal" Height="40" Margin="5" Width="250" Grid.Column="0" Grid.RowSpan="2" VerticalAlignment="Center">
-                    <Line />
-                    <Button Content="设置" Style="{StaticResource ChromeButton}"/>
-                    <Button Content="关于" Style="{StaticResource ChromeButton}"/>
-                </StackPanel>-->
-
 
                 <Grid Grid.Column="0" Grid.RowSpan="2" Margin="0">
                     <!-- Main content goes here -->
@@ -274,7 +268,7 @@
 
                     <Button Style="{StaticResource SunkenToggleButton}" Grid.Column="0" Grid.Row="0" Margin="1"
                             VerticalAlignment="Bottom" VerticalContentAlignment="Bottom"
-                            x:Name="btnPrevious" Click="btnPrevious_Click">
+                            x:Name="btnPrevious" Click="btnPrevious_Click" IsEnabled="False">
                         <Path HorizontalAlignment="Center"
                           VerticalAlignment="Center"
                           Stretch="Fill"
@@ -285,7 +279,7 @@
                     </Button>
 
                     <Button Style="{StaticResource SunkenToggleButton}" Grid.Column="0" Grid.Row="1" Margin="1"
-                            x:Name="btnNext" Click="btnNext_Click">
+                            x:Name="btnNext" Click="btnNext_Click" IsEnabled="False">
                         <Path HorizontalAlignment="Center"
                           VerticalAlignment="Center"
                           Stretch="Fill"
