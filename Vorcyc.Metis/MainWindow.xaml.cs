@@ -222,7 +222,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             "功能: 从几个网站抓取数据，进行分类并朗读给用户听。\n" +
             "所属单位: 昆明涡旋科技有限公司\n" +
             "作者: cyclone_dll  <cyclone_dll@hotmail.com>\n" +
-            "作者: YuanZun Zhang <123@qq.coim>\n"+
+            "作者: YuanZun Zhang <zyuanzun@163.com>\n" +
             "github: https://github.com/vorcyc/Vorcyc.Metis";
         MessageBox.Show(this, text, "关于", MessageBoxButton.OK, MessageBoxImage.Information);
     }
@@ -445,6 +445,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     #endregion
 
     #region UI events
+    private void btnMinimize_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
 
     private void Image_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
     {

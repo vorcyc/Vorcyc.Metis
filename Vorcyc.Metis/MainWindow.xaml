@@ -355,11 +355,15 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="0">
-                        <Image Source="/Images/min.png" Stretch="None" Margin="2,0,2,0" />
+                        <Image x:Name="btnMinimize"
+                               Source="/Images/min.png"
+                               Stretch="None"
+                               Margin="2,0,2,0"
+                               MouseLeftButtonDown="btnMinimize_MouseLeftButtonDown"/>
                         <Image Source="/Images/exit.png" Stretch="None" Margin="2,0,5,0" 
-                           MouseEnter="Image_MouseEnter"
-                           MouseLeave="Image_MouseLeave"
-                           MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
+                               MouseEnter="Image_MouseEnter"
+                               MouseLeave="Image_MouseLeave"
+                               MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.RowSpan="2">
