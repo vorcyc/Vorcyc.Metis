@@ -13,7 +13,7 @@
 		<PackageId>Vorcyc.Metis</PackageId>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<Description>Vorcyc Metis is a powerful web crawling and data extraction framework designed for efficiency and scalability.</Description>
-		<AssemblyName>Vorcyc Metis</AssemblyName>
+		<AssemblyName>Vorcyc.Metis</AssemblyName>
 		<PackageIcon>metis_logo.png</PackageIcon>
 		<ApplicationIcon>Resources\metis_icon.ico</ApplicationIcon>
 	</PropertyGroup>

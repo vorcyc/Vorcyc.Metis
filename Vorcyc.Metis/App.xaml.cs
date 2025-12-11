@@ -21,6 +21,7 @@ public partial class App : System.Windows.Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        SingleInstanceApplicationHelper.Make("VORCYC METIS", this);
 
         await NewsReader.Instance.InitAsync();
 
