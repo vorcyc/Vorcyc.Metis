@@ -1,7 +1,13 @@
-﻿namespace Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
+﻿using PuppeteerSharp;
+
+namespace Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
 
 public sealed class NeteasePageContentArchiver : PageContentArchiver
 {
+    public NeteasePageContentArchiver(IBrowser browser) : base(browser)
+    {
+    }
+
     protected override string ExtractContentSelector =>
         @"() => {
             const root = document.querySelector('div.post_main');

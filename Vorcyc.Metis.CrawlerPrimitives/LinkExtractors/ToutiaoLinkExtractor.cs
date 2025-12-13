@@ -17,12 +17,13 @@ namespace Vorcyc.Metis.CrawlerPrimitives.LinkExtractors;
 public sealed class ToutiaoLinkExtractor : IDisposable, IAsyncDisposable
 {
     private readonly string _baseUrl;
-    private IBrowser? _browser;
+    private IBrowser _browser;
     private IPage? _page;
     private bool _disposed;
 
-    public ToutiaoLinkExtractor(string baseUrl = "https://www.toutiao.com")
+    public ToutiaoLinkExtractor(IBrowser sharedBrowser, string baseUrl = "https://www.toutiao.com")
     {
+        _browser = sharedBrowser;
         _baseUrl = baseUrl;
     }
 
@@ -96,16 +97,8 @@ public sealed class ToutiaoLinkExtractor : IDisposable, IAsyncDisposable
 
     private async Task EnsurePageAsync()
     {
-        if (_page is not null && _browser is not null) return;
+        if (_page is not null) return;
 
-        // 确保 Chromium 可用（若本地已存在则跳过下载）。
-        var browserFetcher = new BrowserFetcher();
-        await browserFetcher.DownloadAsync();
-
-        _browser = await Puppeteer.LaunchAsync(new LaunchOptions
-        {
-            Headless = true
-        });
 
         _page = await _browser.NewPageAsync();
         _page.DefaultNavigationTimeout = 30_000;
@@ -126,21 +119,21 @@ public sealed class ToutiaoLinkExtractor : IDisposable, IAsyncDisposable
 
         //try
         //{
-            var navOptions = new NavigationOptions
-            {
-                WaitUntil = [waitUntil],
-                Timeout = timeoutMs
-            };
+        var navOptions = new NavigationOptions
+        {
+            WaitUntil = [waitUntil],
+            Timeout = timeoutMs
+        };
 
-            // 如果还在 about:blank，使用基础地址进行首次导航；否则执行页面重载
-            var isBlank = string.IsNullOrWhiteSpace(_page!.Url) ||
-                          _page.Url.Equals("about:blank", StringComparison.OrdinalIgnoreCase);
+        // 如果还在 about:blank，使用基础地址进行首次导航；否则执行页面重载
+        var isBlank = string.IsNullOrWhiteSpace(_page!.Url) ||
+                      _page.Url.Equals("about:blank", StringComparison.OrdinalIgnoreCase);
 
-            var response = isBlank
-                ? await _page.GoToAsync(_baseUrl, navOptions)
-                : await _page.ReloadAsync(navOptions);
+        var response = isBlank
+            ? await _page.GoToAsync(_baseUrl, navOptions)
+            : await _page.ReloadAsync(navOptions);
 
-            return response is not null && response.Ok;
+        return response is not null && response.Ok;
         //}
         //catch
         //{

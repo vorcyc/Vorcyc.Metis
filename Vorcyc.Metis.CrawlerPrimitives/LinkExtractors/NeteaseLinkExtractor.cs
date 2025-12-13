@@ -39,7 +39,7 @@ public sealed class NeteaseLinkExtractor : IDisposable, IAsyncDisposable
     private readonly string _baseUrl;
 
     // 浏览器与页面句柄（Lazy 初始化，实例级复用）
-    private IBrowser? _browser;
+    private IBrowser _browser;
     private IPage? _page;
 
     // 释放标记，防止重复释放与使用已释放对象
@@ -49,9 +49,10 @@ public sealed class NeteaseLinkExtractor : IDisposable, IAsyncDisposable
     /// 使用指定基础地址创建提取器实例。
     /// </summary>
     /// <param name="baseUrl">基础地址，默认值为 https://www.163.com。</param>
-    public NeteaseLinkExtractor(string baseUrl = "https://www.163.com")
+    public NeteaseLinkExtractor(IBrowser sharedBrowser, string baseUrl = "https://www.163.com")
     {
         _baseUrl = baseUrl;
+        _browser = sharedBrowser;
     }
 
     /// <summary>
@@ -83,16 +84,7 @@ public sealed class NeteaseLinkExtractor : IDisposable, IAsyncDisposable
     /// </remarks>
     private async Task EnsurePageAsync()
     {
-        if (_page is not null && _browser is not null) return;
-
-        // 确保 Chromium 存在（已存在则快速返回）
-        var browserFetcher = new BrowserFetcher();
-        await browserFetcher.DownloadAsync();
-
-        _browser = await Puppeteer.LaunchAsync(new LaunchOptions
-        {
-            Headless = true // 无头运行，适合服务端/批处理
-        });
+        if (_page is not null) return;
 
         _page = await _browser.NewPageAsync();
         _page.DefaultNavigationTimeout = 30_000; // 30 秒导航超时

@@ -86,12 +86,15 @@ public abstract class PageContentArchiver : IDisposable
     /// </summary>
     protected HttpClient _httpClient;
 
+    private IBrowser _browser;
+
     /// <summary>
     /// 初始化实例并创建默认的 <see cref="HttpClient"/>。
     /// </summary>
-    public PageContentArchiver()
+    public PageContentArchiver(IBrowser browser)
     {
         _httpClient = new HttpClient();
+        _browser = browser;
     }
 
     /// <summary>
@@ -128,21 +131,10 @@ public abstract class PageContentArchiver : IDisposable
         // 如需保存则确保输出目录存在
         if (saveToDisk)
         {
-            Directory.CreateDirectory(outputRoot!);
-        }
+            Directory.CreateDirectory(outputRoot!);        }
 
-        // 确保浏览器可用（首次会下载 Chromium）
-        var fetcher = new BrowserFetcher();
-        await fetcher.DownloadAsync();
 
         var results = new List<ArchiveResult>();
-
-        // 启动无头浏览器；禁用 sandbox 适配容器/CI 环境；禁用 /dev/shm 限制以缓解共享内存不足
-        await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
-        {
-            Headless = true,
-            Args = ["--no-sandbox", "--disable-dev-shm-usage"]
-        });
 
         // 过滤无效 URL，并按 URL 去重
         var filteredLinks = links
@@ -154,7 +146,7 @@ public abstract class PageContentArchiver : IDisposable
             cancellationToken.ThrowIfCancellationRequested();
 
             // 为每个链接创建独立页面，避免串扰
-            using var page = await browser.NewPageAsync();
+            using var page = await _browser.NewPageAsync();
             page.DefaultNavigationTimeout = navigationTimeoutMs;
 
             try

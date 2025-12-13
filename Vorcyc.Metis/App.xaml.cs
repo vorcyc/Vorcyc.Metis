@@ -6,7 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 using System.Windows;
-using Vorcyc.Metis.Services;
+using Vorcyc.Metis.CrawlerPrimitives.Services;
 
 namespace Vorcyc.Metis;
 
@@ -19,12 +19,24 @@ public partial class App : System.Windows.Application
 
     private IHost _host;
 
+
     protected override async void OnStartup(StartupEventArgs e)
     {
+
+        base.OnStartup(e);
+        this.ShutdownMode = ShutdownMode.OnMainWindowClose;
+
         SingleInstanceApplicationHelper.Make("VORCYC METIS", this);
 
+
+        await ApplicationSettings.Instance.LoadAsync();
         await NewsReader.Instance.InitAsync();
 
+
+        ////确保浏览器可用（首次会下载 Chromium）
+        //var fetcher = new BrowserFetcher();
+        //await fetcher.DownloadAsync();
+        //自动解压替代
         if (!Directory.Exists("Chrome"))
             ExtractChrome();
 
@@ -43,15 +55,18 @@ public partial class App : System.Windows.Application
 
         await _host.StartAsync();
 
-        base.OnStartup(e);
+        this.MainWindow = new MainWindow();
+        this.MainWindow.Show();
+
     }
 
 
 
-    protected override void OnExit(ExitEventArgs e)
+    protected override async void OnExit(ExitEventArgs e)
     {
 
         NewsReader.Instance.SaveConfigSafe();
+        await ApplicationSettings.Instance.SaveAsync();
 
         _host?.StopAsync();
 

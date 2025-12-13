@@ -1,4 +1,6 @@
-﻿using PuppeteerSharp;
+﻿//暂时不用
+
+using PuppeteerSharp;
 using System.Text.RegularExpressions;
 
 namespace Vorcyc.Metis.CrawlerPrimitives.LinkExtractors;
@@ -111,10 +113,6 @@ public sealed class StaticPageLinkExtractor : IDisposable, IAsyncDisposable
     private async Task EnsurePageAsync()
     {
         if (_page is not null && _browser is not null) return;
-
-        // 确保 Chromium 可用（本地存在则跳过下载）
-        var browserFetcher = new BrowserFetcher();
-        await browserFetcher.DownloadAsync();
 
         _browser = await Puppeteer.LaunchAsync(new LaunchOptions
         {

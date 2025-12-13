@@ -1,7 +1,13 @@
-﻿namespace Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
+﻿using PuppeteerSharp;
+
+namespace Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
 
 public sealed class ToutiaoPageContentArchiver : PageContentArchiver
 {
+    public ToutiaoPageContentArchiver(IBrowser browser) : base(browser)
+    {
+    }
+
     protected override string ExtractContentSelector =>
         @"() => {
             const root = document.querySelector('div.article-content');

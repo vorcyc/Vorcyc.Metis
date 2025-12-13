@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="jieba.NET" Version="0.42.2" />
-    <PackageReference Include="TorchSharp" Version="0.105.1" />
-    <PackageReference Include="TorchSharp-cpu" Version="0.105.1" />
+    <PackageReference Include="TorchSharp" Version="0.105.2" />
+    <PackageReference Include="TorchSharp-cpu" Version="0.105.2" />
   </ItemGroup>
 
   <ItemGroup>

@@ -27,6 +27,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private Vorcyc.PowerLibrary.Windows.Wpf.DragMoveExtender _dragMoveExtender = null!;
     private WindowInteropHelper _windowInterop = null!;
     private readonly List<ThumbnailToolBarButton> _thumbnailButtons = new();
+    private bool _closeToTray = true;
 
     private NotifyIcon? _tray;
     private ToolStripMenuItem? _autoPlayItem;
@@ -35,6 +36,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private PageContentCategory _selectedInterests = PageContentCategory.None;
 
     private ArchiveEntity? _currentArchive;
+
+
 
     #endregion
 
@@ -47,13 +50,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _windowInterop = new WindowInteropHelper(this);
         Loaded += MainWindow_Loaded;
         Unloaded += MainWindow_Unloaded;
+
+        _closeToTray = ApplicationSettings.Instance.CloseToTray;
     }
 
     private void MainWindow_Loaded(object? sender, RoutedEventArgs e)
     {
         SetupAutoScroll();
         SetupDragMove();
-        SetupTaskbarThumbnailButtons();
+        //SetupTaskbarThumbnailButtons();
 
         // 初始化兴趣选中状态自 NewsReader
         _selectedInterests = NewsReader.Instance.SelectedCategory;
@@ -78,16 +83,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         NewsReader.Instance.PlaybackCompleted -= NewsReader_PlaybackCompleted;
         NewsReader.Instance.ArticleChanged -= NewsReader_ArticleChanged;
+
     }
 
-    protected override void OnStateChanged(EventArgs e)
-    {
-        base.OnStateChanged(e);
-        if (WindowState == WindowState.Minimized)
-        {
-            Hide(); // 最小化到托盘
-        }
-    }
 
     protected override void OnClosed(EventArgs e)
     {
@@ -175,6 +173,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             WindowState = WindowState.Normal;
             Activate();
         });
+
+        ToolStripMenuItem closeToTrayItem = new()
+        {
+            Text = "关闭时隐藏主窗口至系统通知区",
+            Checked = _closeToTray,
+        };
+        closeToTrayItem.Click += async (s, _) =>
+        {
+            var menuItem = (ToolStripMenuItem)s!;
+            menuItem.Checked = !menuItem.Checked;
+            _closeToTray = menuItem.Checked;
+
+            ApplicationSettings.Instance.CloseToTray = _closeToTray;
+            await ApplicationSettings.Instance.SaveAsync();
+        };
+
+
+        _tray.ContextMenuStrip.Items.Add(closeToTrayItem);
 
         // 分隔线
         _tray.ContextMenuStrip.Items.Add(new ToolStripSeparator());
@@ -465,6 +481,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (_closeToTray)
+        {
+            // Release any pending mouse capture to avoid stuck capture after Hide()
+            if (Mouse.Captured is IInputElement captured)
+            {
+                captured.ReleaseMouseCapture();
+            }
+            else
+            {
+                Mouse.Capture(null);
+            }
+
+            Hide();
+            e.Handled = true;
+            return;
+        }
         Close();
     }
 
