@@ -13,6 +13,11 @@ public sealed class ApplicationSettings
 
     public async Task LoadAsync()
     {
+        if (!File.Exists(GetSettingsPath()))
+        {
+            return;
+        }
+
         await using var fs = File.Open(GetSettingsPath(), FileMode.Open, FileAccess.Read, FileShare.Read);
         var incoming = await JsonSerializer.DeserializeAsync<ApplicationSettings>(fs, SerializerOptions);
         if (incoming is null)

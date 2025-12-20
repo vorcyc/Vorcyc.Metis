@@ -448,6 +448,10 @@ internal sealed class NewsReader : IDisposable
     {
         try
         {
+            if (!File.Exists(ConfigPath))
+            {
+                return;
+            }
 
             var json = File.ReadAllText(ConfigPath);
             var cfg = JsonSerializer.Deserialize<NewsReaderConfig>(json);
