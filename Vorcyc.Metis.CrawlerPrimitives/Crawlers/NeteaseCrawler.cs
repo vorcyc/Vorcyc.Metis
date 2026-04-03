@@ -7,22 +7,30 @@ using Vorcyc.Metis.Storage.SQLiteStorage;
 
 namespace Vorcyc.Metis.CrawlerPrimitives.Crawlers;
 
+/// <summary>
+/// 网易新闻爬虫：从 https://www.163.com 提取文章链接，归档页面内容并分类后存入数据库。
+/// </summary>
 internal class NeteaseCrawler : ICrawler
 {
-
+    /// <inheritdoc />
     public string Url => "https://www.163.com";
 
+    /// <inheritdoc />
     public string FriendlyName => "网易";
 
+    /// <inheritdoc />
     public string InternalName => "netease";
 
-
+    /// <summary>网易链接提取器实例。</summary>
     private NeteaseLinkExtractor? _neteaseLinkExtractor;
 
+    /// <summary>网易页面内容归档器实例。</summary>
     private NeteasePageContentArchiver? _neteasePageContentArchiver;
 
+    /// <summary>是否已完成初始化。</summary>
     private bool _isInitialized = false;
 
+    /// <inheritdoc />
     public void InitializeComponents(IBrowser sharedBrowser)
     {
         _neteaseLinkExtractor = new(sharedBrowser);
@@ -30,6 +38,7 @@ internal class NeteaseCrawler : ICrawler
         _isInitialized = true;
     }
 
+    /// <inheritdoc />
     public async Task RunAsync(SQLiteDbContext dbContext, ILogger<CrawlingStorageService> logger, CancellationToken stoppingToken)
     {
 
@@ -103,6 +112,7 @@ internal class NeteaseCrawler : ICrawler
     }
 
 
+    /// <inheritdoc />
     public void ReleaseComponents()
     {
         _neteaseLinkExtractor?.Dispose();
@@ -111,6 +121,7 @@ internal class NeteaseCrawler : ICrawler
         _neteasePageContentArchiver = null;
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         this.ReleaseComponents();

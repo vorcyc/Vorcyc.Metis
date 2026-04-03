@@ -215,49 +215,43 @@ internal sealed class NewsReader : IDisposable
 
         if (_index >= _history.Count - 1)
         {
-            // 末尾：尝试扩充随机批次（分类过滤→不过滤，近→远）
-            var lastBatch = DbHelper.GetRandomBatchExcept(_history, SelectedCategory, lessThanDays: 7, maxCount: 5);
-            if (lastBatch is null || !lastBatch.Any())
+            // 末尾：按"分类过滤→不过滤，近→远"的优先级依次尝试补充
+            IEnumerable<ArchiveEntity>? batch = null;
+            foreach (var (useCategory, days) in FallbackStrategies)
             {
-                lastBatch = DbHelper.GetRandomBatchExcept(_history, SelectedCategory, lessThanDays: 30, maxCount: 5);
-                if (lastBatch is null || !lastBatch.Any())
-                {
-                    lastBatch = DbHelper.GetRandomBatchExcept(_history, SelectedCategory, lessThanDays: 365, maxCount: 5);
-                    if (lastBatch is null || !lastBatch.Any())
-                    {
-                        lastBatch = DbHelper.GetRandomBatchExcept(_history, lessThanDays: 7, maxCount: 5);
-                        if (lastBatch is null || !lastBatch.Any())
-                        {
-                            lastBatch = DbHelper.GetRandomBatchExcept(_history, lessThanDays: 30, maxCount: 5);
-                            if (lastBatch is null || !lastBatch.Any())
-                            {
-                                lastBatch = DbHelper.GetRandomBatchExcept(_history, lessThanDays: 365, maxCount: 5);
-                                if (lastBatch is null || !lastBatch.Any())
-                                {
-                                    Speak("没有更多的新闻了");
-                                    _isPlaying = false;
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
+                batch = useCategory
+                    ? DbHelper.GetRandomBatchExcept(_history, SelectedCategory, lessThanDays: days, maxCount: 5)
+                    : DbHelper.GetRandomBatchExcept(_history, lessThanDays: days, maxCount: 5);
+
+                if (batch is not null && batch.Any())
+                    break;
             }
 
-            _history.AddRange(lastBatch);
-            _index = Math.Min(_history.Count - 1, _index + 1);
-            var article = _history[_index];
-            ReadArticle(article);
+            if (batch is null || !batch.Any())
+            {
+                Speak("没有更多的新闻了");
+                _isPlaying = false;
+                return;
+            }
+
+            _history.AddRange(batch);
         }
-        else
-        {
-            _index = Math.Min(_history.Count - 1, _index + 1);
-            var article = _history[_index];
-            ReadArticle(article);
-        }
+
+        _index = Math.Min(_history.Count - 1, _index + 1);
+        ReadArticle(_history[_index]);
 
         Debug.WriteLine(_index);
     }
+
+    /// <summary>
+    /// 获取下一批文章时的回退策略列表：(是否按分类过滤, 时间窗口天数)。
+    /// 按优先级从高到低排列：先按分类近期 → 分类远期 → 不限分类近期 → 不限分类远期。
+    /// </summary>
+    private static readonly (bool useCategory, int days)[] FallbackStrategies =
+    [
+        (true, 7), (true, 30), (true, 365),
+        (false, 7), (false, 30), (false, 365),
+    ];
 
     #endregion
 
@@ -470,6 +464,15 @@ internal sealed class NewsReader : IDisposable
     }
 
     /// <summary>
+    /// 配置序列化选项（枚举以字符串形式存储，便于人工阅读）。
+    /// </summary>
+    private static readonly JsonSerializerOptions ConfigSerializerOptions = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    /// <summary>
     /// 保存配置（安全，不抛异常）。建议在用户修改设置时调用，或在 <see cref="Dispose"/> 中统一保存。
     /// </summary>
     public void SaveConfigSafe()
@@ -483,11 +486,7 @@ internal sealed class NewsReader : IDisposable
                 SelectedCategory = SelectedCategory
             };
 
-            var json = JsonSerializer.Serialize(cfg, new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                Converters = { new JsonStringEnumConverter() }
-            });
+            var json = JsonSerializer.Serialize(cfg, ConfigSerializerOptions);
 
             File.WriteAllText(ConfigPath, json);
         }

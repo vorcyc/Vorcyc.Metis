@@ -8,24 +8,30 @@ using Vorcyc.Metis.Storage.SQLiteStorage;
 
 namespace Vorcyc.Metis.CrawlerPrimitives.Crawlers;
 
+/// <summary>
+/// 今日头条爬虫：从 https://www.toutiao.com 提取文章链接，归档页面内容并分类后存入数据库。
+/// </summary>
 internal class ToutiaoCrawler : ICrawler
 {
-
-
+    /// <inheritdoc />
     public string Url => "https://www.toutiao.com";
 
+    /// <inheritdoc />
     public string FriendlyName => "今日头条";
 
+    /// <inheritdoc />
     public string InternalName => "toutiao";
 
-
-
+    /// <summary>头条链接提取器实例。</summary>
     private ToutiaoLinkExtractor? _toutiaoLinkExtractor;
 
+    /// <summary>头条页面内容归档器实例。</summary>
     private ToutiaoPageContentArchiver? _toutiaoPageContentArchiver;
 
+    /// <summary>是否已完成初始化。</summary>
     private bool _isInitialized = false;
 
+    /// <inheritdoc />
     public void InitializeComponents(IBrowser sharedBrowser)
     {
         _toutiaoLinkExtractor = new ToutiaoLinkExtractor(sharedBrowser);
@@ -33,7 +39,7 @@ internal class ToutiaoCrawler : ICrawler
         _isInitialized = true;
     }
 
-
+    /// <inheritdoc />
     public async Task RunAsync(SQLiteDbContext dbContext, ILogger<CrawlingStorageService> logger, CancellationToken stoppingToken)
     {
 
@@ -113,16 +119,16 @@ internal class ToutiaoCrawler : ICrawler
     }
 
 
+    /// <inheritdoc />
     public void ReleaseComponents()
     {
-        // No-op
         _toutiaoLinkExtractor?.Dispose();
         _toutiaoPageContentArchiver?.Dispose();
         _toutiaoLinkExtractor = null;
         _toutiaoPageContentArchiver = null;
     }
 
-
+    /// <inheritdoc />
     public void Dispose()
     {
         this.ReleaseComponents();

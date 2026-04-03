@@ -2,12 +2,20 @@
 
 namespace Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
 
+/// <summary>
+/// 网易新闻页面内容归档器：提取 div.post_main 内的正文、图片、发布者及发布时间。
+/// </summary>
 public sealed class NeteasePageContentArchiver : PageContentArchiver
 {
+    /// <summary>
+    /// 初始化网易归档器，注入共享浏览器实例。
+    /// </summary>
+    /// <param name="browser">共享的无头浏览器实例。</param>
     public NeteasePageContentArchiver(IBrowser browser) : base(browser)
     {
     }
 
+    /// <inheritdoc />
     protected override string ExtractContentSelector =>
         @"() => {
             const root = document.querySelector('div.post_main');

@@ -134,10 +134,19 @@ public enum PageContentCategory
         | Business
 }
 
+/// <summary>
+/// 页面内容分类构建器：基于标题文本自动检测语言并调用对应的分类模型，同时提供枚举与中文友好字符串之间的转换。
+/// </summary>
 public static class PageCategoryBuilder
 {
 
 
+    /// <summary>
+    /// 将分类模型输出的英文标签字符串转换为对应的 <see cref="PageContentCategory"/> 枚举值。
+    /// </summary>
+    /// <param name="category">分类模型返回的英文标签（如 "news_tech"、"sport"）。</param>
+    /// <returns>对应的 <see cref="PageContentCategory"/> 枚举值。</returns>
+    /// <exception cref="NotImplementedException">当标签未在映射表中时抛出。</exception>
     private static PageContentCategory FromString(string category)
     {
         return category.ToLower() switch
@@ -169,6 +178,13 @@ public static class PageCategoryBuilder
 
 
 
+    /// <summary>
+    /// 根据文章标题自动检测语言并调用对应的分类模型，返回内容分类枚举值。
+    /// </summary>
+    /// <param name="title">文章标题文本。</param>
+    /// <returns>
+    /// 分类结果；若语言无法识别则返回 <see cref="PageContentCategory.None"/>。
+    /// </returns>
     public static PageContentCategory Build(string title)
     {
 
@@ -192,7 +208,11 @@ public static class PageCategoryBuilder
     }
 
 
-    // 将枚举（支持组合）转换为友好的中文字符串
+    /// <summary>
+    /// 将分类枚举值（支持 Flags 组合）转换为友好的中文字符串（用顿号连接）。
+    /// </summary>
+    /// <param name="category">分类枚举值（可为组合值）。</param>
+    /// <returns>中文分类文本，如“科技、娱乐”；无分类时返回“未分类”。</returns>
     public static string ToFriendlyChinese(PageContentCategory category)
     {
         if (category == PageContentCategory.None)

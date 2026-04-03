@@ -11,18 +11,21 @@ using Vorcyc.Metis.CrawlerPrimitives.Services;
 namespace Vorcyc.Metis;
 
 /// <summary>
-/// Interaction logic for App.xaml
+/// 应用程序入口类：负责初始化宿主服务、Chrome 浏览器环境、以及应用生命周期管理。
 /// </summary>
 public partial class App : System.Windows.Application
 {
-
-
+    /// <summary>
+    /// 后台宿主实例，承载定时爬取等后台服务。
+    /// </summary>
     private IHost _host;
 
 
+    /// <summary>
+    /// 应用启动时执行：加载设置、初始化新闻阅读器、解压 Chrome、启动后台宿主服务并创建主窗口。
+    /// </summary>
     protected override async void OnStartup(StartupEventArgs e)
     {
-
         base.OnStartup(e);
         this.ShutdownMode = ShutdownMode.OnMainWindowClose;
 
@@ -62,13 +65,17 @@ public partial class App : System.Windows.Application
 
 
 
+    /// <summary>
+    /// 应用退出时执行：保存配置、停止后台宿主、清理 Chrome 进程。
+    /// </summary>
     protected override async void OnExit(ExitEventArgs e)
     {
-
         NewsReader.Instance.SaveConfigSafe();
         await ApplicationSettings.Instance.SaveAsync();
 
-        _host?.StopAsync();
+        // 等待后台宿主优雅停止，避免火忘导致资源泄漏
+        if (_host is not null)
+            await _host.StopAsync();
 
         KillChromeProcesses();
 
@@ -78,16 +85,15 @@ public partial class App : System.Windows.Application
 
 
 
+    /// <summary>
+    /// 清理残留的 Google Chrome for Testing 进程，避免退出后遗留僵尸进程。
+    /// </summary>
     static void KillChromeProcesses()
     {
-
-        foreach (var p in Process.GetProcesses())
+        foreach (var p in Process.GetProcessesByName("chrome"))
         {
             try
             {
-                if (!string.Equals(p.ProcessName, "chrome", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
                 var desc = GetDescriptionSafe(p);
                 if (desc.IndexOf("Google Chrome for Testing", StringComparison.OrdinalIgnoreCase) < 0)
                     continue;
@@ -108,6 +114,7 @@ public partial class App : System.Windows.Application
             }
         }
 
+        /// <summary>安全获取进程的文件描述信息。</summary>
         static string GetDescriptionSafe(Process p)
         {
             try
@@ -120,6 +127,7 @@ public partial class App : System.Windows.Application
             }
         }
 
+        /// <summary>安全获取进程的可执行文件路径。</summary>
         static string GetPathSafe(Process p)
         {
             try
@@ -133,6 +141,10 @@ public partial class App : System.Windows.Application
         }
     }
 
+    /// <summary>
+    /// 从 chrome_archives.zip 解压 Chrome 浏览器到当前目录。
+    /// 仅在 Chrome 目录不存在时由 <see cref="OnStartup"/> 调用。
+    /// </summary>
     static void ExtractChrome()
     {
         var zipPath = Path.GetFullPath("chrome_archives.zip");

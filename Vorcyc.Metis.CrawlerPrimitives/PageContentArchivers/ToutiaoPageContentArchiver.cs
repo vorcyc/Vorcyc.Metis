@@ -2,12 +2,20 @@
 
 namespace Vorcyc.Metis.CrawlerPrimitives.PageContentArchivers;
 
+/// <summary>
+/// 今日头条页面内容归档器：提取 div.article-content 内的正文、图片、发布者及发布时间。
+/// </summary>
 public sealed class ToutiaoPageContentArchiver : PageContentArchiver
 {
+    /// <summary>
+    /// 初始化头条归档器，注入共享浏览器实例。
+    /// </summary>
+    /// <param name="browser">共享的无头浏览器实例。</param>
     public ToutiaoPageContentArchiver(IBrowser browser) : base(browser)
     {
     }
 
+    /// <inheritdoc />
     protected override string ExtractContentSelector =>
         @"() => {
             const root = document.querySelector('div.article-content');
